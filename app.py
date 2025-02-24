@@ -2,16 +2,18 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+import joblib
 from sklearn.preprocessing import StandardScaler
 
-# Cargar el modelo
+# Cargar el modelo de TensorFlow
 model = tf.keras.models.load_model("my_model.keras")
 
-# Cargar scaler preentrenado si se usó en el entrenamiento
+# Intentar cargar el scaler preentrenado
 try:
-    scaler = joblib.load("scaler.pkl")  # Asegúrate de guardar y cargar el scaler adecuado
-except:
-    scaler = StandardScaler()
+    scaler = joblib.load("scaler.pkl")  
+except FileNotFoundError:
+    st.warning("No se encontró 'scaler.pkl'. Se usará un nuevo StandardScaler (puede afectar las predicciones).")
+    scaler = StandardScaler()  
 
 # Título de la aplicación
 st.title("Predicción de Enfermedades Cardíacas 🫀")
@@ -66,25 +68,28 @@ input_data["thal"] = input_data["thal"].map({"Normal": 1, "Defecto Fijo": 2, "De
 
 # Botón para predecir
 if st.sidebar.button("Predecir"):
-    input_array = scaler.transform(np.array(input_data, dtype=np.float32).reshape(1, -1))
+    try:
+        # Normalizar los datos con el scaler cargado
+        input_array = scaler.transform(input_data.values)
+        
+        # Obtener predicción
+        prediction = model.predict(input_array)
+        probabilities = prediction[0]  # Se asume que model.predict devuelve un array (1, n_clases)
+
+        # Normalizar a porcentajes
+        probabilities_percentage = (probabilities * 100).round(2)
+
+        # Determinar la clase con mayor probabilidad
+        predicted_class = int(np.argmax(probabilities))
+
+        # Mostrar distribución de probabilidades
+        st.subheader("Distribución de probabilidad por clase:")
+        for i, prob in enumerate(probabilities_percentage):
+            st.write(f"Clase {i}: {prob}%")
+
+        # Mostrar predicción final
+        st.subheader("Predicción final:")
+        st.write(f"Clase {predicted_class}")
     
-    # Estandarización
-    input_array = scaler.transform(input_array)  # Normalizamos los datos
-    
-    prediction = model.predict(input_array)  # Obtiene las probabilidades de cada clase
-    probabilities = prediction[0]  # Se asume que model.predict devuelve un array (1, 5)
-    
-    # Normalizar a porcentajes
-    probabilities_percentage = (probabilities * 100).round(2)
-    
-    # Determinar la clase con mayor probabilidad
-    predicted_class = int(np.argmax(probabilities))
-    
-    # Mostrar distribución de probabilidades
-    st.subheader("Distribución de probabilidad por clase:")
-    for i, prob in enumerate(probabilities_percentage):
-        st.write(f"Clase {i}: {prob}%")
-    
-    # Mostrar predicción final
-    st.subheader("Predicción final:")
-    st.write(f"Clase {predicted_class}")
+    except Exception as e:
+        st.error(f"Error al hacer la predicción: {e}")
