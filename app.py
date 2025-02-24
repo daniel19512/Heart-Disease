@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import tensorflow as tf
 
-# Cargar el modelo entrenado
+# Cargar el modelo
 model = tf.keras.models.load_model("my_model.keras")
 
 # Título de la aplicación
@@ -10,7 +11,7 @@ st.title("Predicción de Enfermedades Cardíacas 🫀")
 
 # Formulario para ingresar datos
 st.sidebar.header("Ingrese los datos del paciente")
-age = st.sidebar.number_input("Edad", min_value=1, max_value=100, value=50)
+age = st.sidebar.number_input("Edad", min_value=20, max_value=100, value=50)
 sex = st.sidebar.selectbox("Sexo", ["Masculino", "Femenino"])
 cp = st.sidebar.selectbox("Tipo de Dolor en el Pecho", ["Angina Típica", "Angina Atípica", "No Anginoso", "Asintomático"])
 trestbps = st.sidebar.number_input("Presión Arterial en Reposo (mmHg)", min_value=80, max_value=200, value=120)
@@ -20,7 +21,7 @@ restecg = st.sidebar.selectbox("Resultados ECG en Reposo", ["Normal", "Anormalid
 thalach = st.sidebar.number_input("Frecuencia Cardíaca Máxima", min_value=60, max_value=220, value=150)
 exang = st.sidebar.selectbox("Angina inducida por Ejercicio", ["No", "Sí"])
 oldpeak = st.sidebar.number_input("Depresión ST", min_value=0.0, max_value=10.0, value=1.0)
-slope = st.sidebar.selectbox("Pendiente del ST", ["Downsloping", "Flat", "Upsloping"])
+slope = st.sidebar.selectbox("Pendiente del ST", ["Up", "Flat", "Down"])
 ca = st.sidebar.slider("Número de vasos coloreados", 0, 4, 0)
 thal = st.sidebar.selectbox("Condición del Corazón", ["Normal", "Defecto Fijo", "Defecto Reversible"])
 
@@ -28,22 +29,35 @@ thal = st.sidebar.selectbox("Condición del Corazón", ["Normal", "Defecto Fijo"
 input_data = pd.DataFrame({
     "age": [age],
     "sex": [1 if sex == "Masculino" else 0],
-    "cp": [1 if cp == "Angina Típica" else 2 if cp == "Angina Atípica" else 3 if cp == "No Anginoso" else 4],
+    "cp": [cp],
     "trestbps": [trestbps],
     "chol": [chol],
     "fbs": [1 if fbs == "Sí" else 0],
-    "restecg": [0 if restecg == "Normal" else 1 if restecg == "Anormalidad ST-T" else 2],
+    "restecg": [restecg],
     "thalach": [thalach],
     "exang": [1 if exang == "Sí" else 0],
     "oldpeak": [oldpeak],
-    "slope": [1 if slope == "Downsloping" else 2 if slope == "Flat" else 3],
+    "slope": [slope],
     "ca": [ca],
-    "thal": [1 if thal == "Normal" else 2 if thal == "Defecto Fijo" else 3],
+    "thal": [thal],
 })
 
 # Botón para predecir
 if st.sidebar.button("Predecir"):
-    prediction = model.predict(input_data)
-    resultado = "Enfermedad Cardíaca Detectada 🛑" if prediction[0] >= 0.5 else "No hay Enfermedad Cardíaca ✅"
-    st.subheader("Resultado de la Predicción:")
-    st.write(resultado)
+    prediction = model.predict(input_data)  # Obtiene las probabilidades de cada clase
+    probabilities = prediction[0]  # Se asume que model.predict devuelve un array (1, 5)
+
+    # Normalizar a porcentajes
+    probabilities_percentage = (probabilities * 100).round(2)
+
+    # Determinar la clase con mayor probabilidad
+    predicted_class = int(np.argmax(probabilities))
+
+    # Mostrar distribución de probabilidades
+    st.subheader("Distribución de probabilidad por clase:")
+    for i, prob in enumerate(probabilities_percentage):
+        st.write(f"Clase {i}: {prob}%")
+
+    # Mostrar predicción final
+    st.subheader("Predicción final:")
+    st.write(f"Clase {predicted_class}")
