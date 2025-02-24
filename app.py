@@ -70,26 +70,29 @@ input_data["thal"] = input_data["thal"].map({"Normal": 1, "Defecto Fijo": 2, "De
 if st.sidebar.button("Predecir"):
     try:
         # Normalizar los datos con el scaler cargado
-        input_array = scaler.transform(input_data.values)
+        input_array = scaler.transform(input_data.values).reshape(1, -1)
         
         # Obtener predicción
         prediction = model.predict(input_array)
         probabilities = prediction[0]  # Se asume que model.predict devuelve un array (1, n_clases)
 
+        # Mostrar predicciones para depuración
+        st.write("Predicciones del modelo:", probabilities)
+
         # Normalizar a porcentajes
         probabilities_percentage = (probabilities * 100).round(2)
 
         # Determinar la clase con mayor probabilidad
-        predicted_class = int(np.argmax(probabilities))
+        predicted_class = int(np.argmax(probabilities)) + 1  # Ajustar si las clases van de 1 a N
 
         # Mostrar distribución de probabilidades
         st.subheader("Distribución de probabilidad por clase:")
         for i, prob in enumerate(probabilities_percentage):
-            st.write(f"Clase {i}: {prob}%")
+            st.write(f"Clase {i + 1}: {prob}%")
 
         # Mostrar predicción final
         st.subheader("Predicción final:")
-        st.write(f"Clase {predicted_class}")
+        st.write(f"La clase predicha es: {predicted_class}")
     
     except Exception as e:
         st.error(f"Error al hacer la predicción: {e}")
