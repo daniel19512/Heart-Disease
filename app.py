@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import tensorflow as tf
 
 # Cargar el modelo entrenado
 model = tf.keras.models.load_model("my_model.keras")
@@ -19,7 +20,7 @@ restecg = st.sidebar.selectbox("Resultados ECG en Reposo", ["Normal", "Anormalid
 thalach = st.sidebar.number_input("Frecuencia Cardíaca Máxima", min_value=60, max_value=220, value=150)
 exang = st.sidebar.selectbox("Angina inducida por Ejercicio", ["No", "Sí"])
 oldpeak = st.sidebar.number_input("Depresión ST", min_value=0.0, max_value=10.0, value=1.0)
-slope = st.sidebar.selectbox("Pendiente del ST", ["Up", "Flat", "Down"])
+slope = st.sidebar.selectbox("Pendiente del ST", ["Downsloping", "Flat", "Upsloping"])
 ca = st.sidebar.slider("Número de vasos coloreados", 0, 4, 0)
 thal = st.sidebar.selectbox("Condición del Corazón", ["Normal", "Defecto Fijo", "Defecto Reversible"])
 
@@ -27,22 +28,22 @@ thal = st.sidebar.selectbox("Condición del Corazón", ["Normal", "Defecto Fijo"
 input_data = pd.DataFrame({
     "age": [age],
     "sex": [1 if sex == "Masculino" else 0],
-    "cp": [cp],
+    "cp": [1 if cp == "Angina Típica" else 2 if cp == "Angina Atípica" else 3 if cp == "No Anginoso" else 4],
     "trestbps": [trestbps],
     "chol": [chol],
     "fbs": [1 if fbs == "Sí" else 0],
-    "restecg": [restecg],
+    "restecg": [0 if restecg == "Normal" else 1 if restecg == "Anormalidad ST-T" else 2],
     "thalach": [thalach],
     "exang": [1 if exang == "Sí" else 0],
     "oldpeak": [oldpeak],
-    "slope": [slope],
+    "slope": [1 if slope == "Downsloping" else 2 if slope == "Flat" else 3],
     "ca": [ca],
-    "thal": [thal],
+    "thal": [1 if thal == "Normal" else 2 if thal == "Defecto Fijo" else 3],
 })
 
 # Botón para predecir
 if st.sidebar.button("Predecir"):
     prediction = model.predict(input_data)
-    resultado = "Enfermedad Cardíaca Detectada 🛑" if prediction[0] == 1 else "No hay Enfermedad Cardíaca ✅"
+    resultado = "Enfermedad Cardíaca Detectada 🛑" if prediction[0] >= 0.5 else "No hay Enfermedad Cardíaca ✅"
     st.subheader("Resultado de la Predicción:")
     st.write(resultado)
