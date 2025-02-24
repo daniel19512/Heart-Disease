@@ -105,11 +105,6 @@ if st.sidebar.button("Predecir"):
         # Determinar la clase con mayor probabilidad
         predicted_class = int(np.argmax(probabilities)) 
     
-        # Mostrar distribución de probabilidades
-        st.subheader("Distribución de probabilidad por clase:")
-        for i, prob in enumerate(probabilities_percentage):
-            st.write(f"Clase {i}: {prob:.2f}%")
-
         # Determinar color del cuadro según la clase predicha
         if predicted_class == 0:
             color_class = "green"
@@ -124,6 +119,12 @@ if st.sidebar.button("Predecir"):
         
         # Mostrar predicción final en cuadro de color
         st.markdown(f'<div class="result-box {color_class}">{message}</div>', unsafe_allow_html=True)
+        
+        # Botón para detallar probabilidades
+        if st.button("Detallar probabilidades"):
+            st.subheader("Distribución de probabilidad por clase:")
+            for i, prob in enumerate(probabilities_percentage):
+                st.write(f"Clase {i}: {prob:.2f}%")
     
     except Exception as e:
         st.error(f"Error al hacer la predicción: {e}")
