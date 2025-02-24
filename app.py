@@ -89,7 +89,7 @@ if st.sidebar.button("Predecir"):
         # Mostrar distribución de probabilidades
         st.subheader("Distribución de probabilidad por clase:")
         for i, prob in enumerate(probabilities_percentage):
-            st.write(f"Clase {i + 1}: {prob}%")
+            st.write(f"Clase {i}: {prob}%")
 
         # Mostrar predicción final
         st.subheader("Predicción final:")
