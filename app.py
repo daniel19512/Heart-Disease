@@ -44,7 +44,7 @@ if "prediction" not in st.session_state:
     st.session_state["probabilities"] = None
 
 # Título de la aplicación
-st.title("❤️ Predicción de Enfermedades Cardíacas")
+st.title("Predicción de Enfermedades Cardíacas")
 st.markdown("Ingrese los datos del paciente para obtener un diagnóstico.")
 
 # Formulario para ingresar datos
@@ -136,7 +136,11 @@ if st.session_state["prediction"] is not None:
     
     st.markdown(f'<div class="result-box {color_class}">{message}</div>', unsafe_allow_html=True)
     
-    if st.button("Detallar probabilidades"):
+    if st.button("Ver detalles de la predicción"):
+        st.session_state.show_details = not st.session_state.show_details
+
+    # Mostrar probabilidades si el usuario lo solicita
+    if st.session_state.show_details:
         st.subheader("Distribución de probabilidad por clase:")
-        for i, prob in enumerate(probabilities_percentage):
+        for i, prob in enumerate(st.session_state.probabilities):
             st.write(f"Clase {i}: {prob:.2f}%")
