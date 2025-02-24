@@ -67,6 +67,9 @@ if st.sidebar.button("Predecir"):
     # Depuración: Verificar dimensiones antes de predecir
     print("🔍 Forma esperada por el modelo:", model.input_shape)  # (None, num_features)
     print("🔍 Forma de input_array:", input_array.shape)
+    print("🔍 Verificando modelo...")
+    print(model.summary())  # Esto mostrará la estructura del modelo
+
     prediction = model.predict(input_data)  # Obtiene las probabilidades de cada clase
     probabilities = prediction[0]  # Se asume que model.predict devuelve un array (1, 5)
 
