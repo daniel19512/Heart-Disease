@@ -77,19 +77,16 @@ if st.sidebar.button("Predecir"):
         prediction = model.predict(input_array)
         probabilities = prediction[0]  # Se asume que model.predict devuelve un array (1, n_clases)
 
-        # Mostrar predicciones para depuración
-        st.write("Predicciones del modelo:", probabilities)
-
         # Normalizar a porcentajes
         probabilities_percentage = (probabilities * 100).round(2)
 
         # Determinar la clase con mayor probabilidad
-        predicted_class = int(np.argmax(probabilities)) + 1  # Ajustar si las clases van de 1 a N
-
+        predicted_class = int(np.argmax(probabilities)) 
+    
         # Mostrar distribución de probabilidades
         st.subheader("Distribución de probabilidad por clase:")
         for i, prob in enumerate(probabilities_percentage):
-            st.write(f"Clase {i}: {prob}%")
+            st.write(f"Clase {i}: {prob.round(3}%")
 
         # Mostrar predicción final
         st.subheader("Predicción final:")
