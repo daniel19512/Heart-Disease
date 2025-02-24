@@ -37,6 +37,12 @@ except FileNotFoundError:
     st.warning("No se encontró 'scaler.pkl'. Se usará un nuevo StandardScaler (puede afectar las predicciones).")
     scaler = StandardScaler()  
 
+# Inicializar session_state para mantener la predicción
+tf.get_logger().setLevel('ERROR')
+if "prediction" not in st.session_state:
+    st.session_state["prediction"] = None
+    st.session_state["probabilities"] = None
+
 # Título de la aplicación
 st.title("❤️ Predicción de Enfermedades Cardíacas")
 st.markdown("Ingrese los datos del paciente para obtener un diagnóstico.")
@@ -105,26 +111,32 @@ if st.sidebar.button("Predecir"):
         # Determinar la clase con mayor probabilidad
         predicted_class = int(np.argmax(probabilities)) 
     
-        # Determinar color del cuadro según la clase predicha
-        if predicted_class == 0:
-            color_class = "green"
-            message = "Baja probabilidad de enfermedad cardíaca."
-        elif predicted_class in [1, 2]:
-            color_class = "yellow"
-            message = "Riesgo moderado de enfermedad cardíaca."
-        else:
-            color_class = "red"
-            message = "Alta probabilidad de enfermedad cardíaca. Consulta con un especialista."
-            st.image("warning.gif", caption="Advertencia", use_container_width=True)
-        
-        # Mostrar predicción final en cuadro de color
-        st.markdown(f'<div class="result-box {color_class}">{message}</div>', unsafe_allow_html=True)
-        
-        # Botón para detallar probabilidades
-        if st.button("Detallar probabilidades"):
-            st.subheader("Distribución de probabilidad por clase:")
-            for i, prob in enumerate(probabilities_percentage):
-                st.write(f"Clase {i}: {prob:.2f}%")
-    
+        # Guardar en session_state
+        st.session_state["prediction"] = predicted_class
+        st.session_state["probabilities"] = probabilities_percentage
     except Exception as e:
         st.error(f"Error al hacer la predicción: {e}")
+
+# Mostrar resultado si hay una predicción
+if st.session_state["prediction"] is not None:
+    predicted_class = st.session_state["prediction"]
+    probabilities_percentage = st.session_state["probabilities"]
+
+    # Determinar color del cuadro según la clase predicha
+    if predicted_class == 0:
+        color_class = "green"
+        message = "Baja probabilidad de enfermedad cardíaca."
+    elif predicted_class in [1, 2]:
+        color_class = "yellow"
+        message = "Riesgo moderado de enfermedad cardíaca."
+    else:
+        color_class = "red"
+        message = "Alta probabilidad de enfermedad cardíaca. Consulta con un especialista."
+        st.image("warning.gif", caption="Advertencia", use_container_width=True)
+    
+    st.markdown(f'<div class="result-box {color_class}">{message}</div>', unsafe_allow_html=True)
+    
+    if st.button("Detallar probabilidades"):
+        st.subheader("Distribución de probabilidad por clase:")
+        for i, prob in enumerate(probabilities_percentage):
+            st.write(f"Clase {i}: {prob:.2f}%")
