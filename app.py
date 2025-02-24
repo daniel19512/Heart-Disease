@@ -10,7 +10,7 @@ st.title("Predicción de Enfermedades Cardíacas 🫀")
 
 # Formulario para ingresar datos
 st.sidebar.header("Ingrese los datos del paciente")
-age = st.sidebar.number_input("Edad", min_value=20, max_value=100, value=50)
+age = st.sidebar.number_input("Edad", min_value=1, max_value=100, value=50)
 sex = st.sidebar.selectbox("Sexo", ["Masculino", "Femenino"])
 cp = st.sidebar.selectbox("Tipo de Dolor en el Pecho", ["Angina Típica", "Angina Atípica", "No Anginoso", "Asintomático"])
 trestbps = st.sidebar.number_input("Presión Arterial en Reposo (mmHg)", min_value=80, max_value=200, value=120)
