@@ -44,7 +44,7 @@ input_data = pd.DataFrame({
 
 # Botón para predecir
 if st.sidebar.button("Predecir"):
-    prediction = model.predict(input_data)  # Obtiene las probabilidades de cada clase
+    prediction = model.predict(input_data.to_numpy())  # Obtiene las probabilidades de cada clase
     probabilities = prediction[0]  # Se asume que model.predict devuelve un array (1, 5)
 
     # Normalizar a porcentajes
