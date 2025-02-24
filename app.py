@@ -42,6 +42,24 @@ input_data = pd.DataFrame({
     "thal": [thal],
 })
 
+# Mapear las variables categóricas a valores numéricos
+input_data["sex"] = input_data["sex"].map({"Male": 1, "Female": 0})
+input_data["cp"] = input_data["cp"].map({
+    "typical angina": 1,
+    "atypical angina": 2,
+    "non-anginal": 3,
+    "asymptomatic": 4
+})
+input_data["restecg"] = input_data["restecg"].map({
+    "normal": 0,
+    "st-t abnormality": 1,
+    "lv hypertrophy": 2
+})
+input_data["fbs"] = input_data["fbs"].map({1: 1, 0: 0})
+input_data["exang"] = input_data["exang"].map({1: 1, 0: 0})
+input_data["slope"] = input_data["slope"].map({"downsloping": 1, "flat": 2, "upsloping": 3})
+input_data["thal"] = input_data["thal"].map({"normal": 1, "fixed defect": 2, "reversable defect": 3})
+
 # Botón para predecir
 if st.sidebar.button("Predecir"):
     input_array = np.array(input_data, dtype=np.float32).reshape(1, -1)
