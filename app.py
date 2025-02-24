@@ -15,58 +15,33 @@ st.set_page_config(page_title="Predicción de Enfermedad Cardíaca", page_icon="
 st.markdown(
     """
     <style>
-        .main {
-            background-color: #e8f4f8;
-            padding: 20px;
+        .result-box {
+            padding: 15px;
             border-radius: 10px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
         }
-        .stButton>button {
-            background-color: #4CAF50;
-            color: white;
-            font-size: 16px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .stError {
-            background-color: #ffcccc;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .stWarning {
-            background-color: #fff5cc;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .stSuccess {
-            background-color: #ccffcc;
-            padding: 10px;
-            border-radius: 5px;
-        }
+        .green { background-color: #ccffcc; color: #006600; }
+        .yellow { background-color: #fff4c2; color: #996600; }
+        .red { background-color: #ffcccc; color: #990000; }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Título y descripción
-st.title("❤️ Predicción de Enfermedad Cardíaca")
-st.markdown("Ingrese los datos del paciente para obtener un diagnóstico.")
-
-# Cargar el scaler preentrenado
+# Intentar cargar el scaler preentrenado
 try:
     scaler = joblib.load("scaler.pkl")  
 except FileNotFoundError:
     st.warning("No se encontró 'scaler.pkl'. Se usará un nuevo StandardScaler (puede afectar las predicciones).")
     scaler = StandardScaler()  
 
-# Iniciar variables en session_state
-if "prediction" not in st.session_state:
-    st.session_state.prediction = None
-if "probabilities" not in st.session_state:
-    st.session_state.probabilities = []
-if "show_details" not in st.session_state:
-    st.session_state.show_details = False
+# Título de la aplicación
+st.title("❤️ Predicción de Enfermedades Cardíacas")
+st.markdown("Ingrese los datos del paciente para obtener un diagnóstico.")
 
-# Sidebar - Formulario para ingresar datos
+# Formulario para ingresar datos
 st.sidebar.header("Ingrese los datos del paciente")
 age = st.sidebar.number_input("Edad", min_value=0, max_value=100, value=50)
 sex = st.sidebar.selectbox("Sexo", ["Masculino", "Femenino"])
@@ -99,9 +74,18 @@ input_data = pd.DataFrame({
     "thal": [thal],
 })
 
-# Mapear variables categóricas a valores numéricos
-input_data["cp"] = input_data["cp"].map({"Angina Típica": 1, "Angina Atípica": 2, "No Anginoso": 3, "Asintomático": 4})
-input_data["restecg"] = input_data["restecg"].map({"Normal": 0, "Anormalidad ST-T": 1, "Hipertrofia Ventricular Izquierda": 2})
+# Mapear las variables categóricas a valores numéricos
+input_data["cp"] = input_data["cp"].map({
+    "Angina Típica": 1,
+    "Angina Atípica": 2,
+    "No Anginoso": 3,
+    "Asintomático": 4
+})
+input_data["restecg"] = input_data["restecg"].map({
+    "Normal": 0,
+    "Anormalidad ST-T": 1,
+    "Hipertrofia Ventricular Izquierda": 2
+})
 input_data["slope"] = input_data["slope"].map({"Down": 1, "Flat": 2, "Up": 3})
 input_data["thal"] = input_data["thal"].map({"Normal": 1, "Defecto Fijo": 2, "Defecto Reversible": 3})
 
@@ -120,46 +104,25 @@ if st.sidebar.button("Predecir"):
 
         # Determinar la clase con mayor probabilidad
         predicted_class = int(np.argmax(probabilities)) 
+    
+        # Mostrar distribución de probabilidades
+        st.subheader("Distribución de probabilidad por clase:")
+        for i, prob in enumerate(probabilities_percentage):
+            st.write(f"Clase {i}: {prob:.2f}%")
 
-        # Guardar en session_state
-        st.session_state.prediction = predicted_class
-        st.session_state.probabilities = probabilities_percentage
+        # Determinar color del cuadro según la clase predicha
+        if predicted_class == 0:
+            color_class = "green"
+            message = "Baja probabilidad de enfermedad cardíaca."
+        elif predicted_class in [1, 2]:
+            color_class = "yellow"
+            message = "Riesgo moderado de enfermedad cardíaca."
+        else:
+            color_class = "red"
+            message = "Alta probabilidad de enfermedad cardíaca. Consulta con un especialista."
+        
+        # Mostrar predicción final en cuadro de color
+        st.markdown(f'<div class="result-box {color_class}">{message}</div>', unsafe_allow_html=True)
     
     except Exception as e:
         st.error(f"Error al hacer la predicción: {e}")
-
-# Mostrar resultado si existe una predicción
-if st.session_state.prediction is not None:
-    predicted_class = st.session_state.prediction
-
-    # Determinar color, mensaje e imagen de advertencia
-    if predicted_class == 0:
-        color_class = "stSuccess"
-        message = "✅ No se detecta enfermedad cardíaca."
-        warning_image = None
-    elif predicted_class in [1, 2]:
-        color_class = "stWarning"
-        message = "⚠️ Riesgo moderado de enfermedad cardíaca."
-        warning_image = None
-    else:
-        color_class = "stError"
-        message = "🚨 Alto riesgo de enfermedad cardíaca."
-        warning_image = "https://cdn-icons-png.flaticon.com/512/564/564619.png"
-
-    # Mostrar resultado con color
-    st.markdown(f'<div class="{color_class}">{message}</div>', unsafe_allow_html=True)
-
-    # Mostrar imagen de advertencia si aplica
-    if warning_image:
-        st.image(warning_image, caption="Advertencia: Alto Riesgo", use_container_width=True)
-
-
-    # Botón para ver detalles de la predicción
-    if st.button("Ver detalles de la predicción"):
-        st.session_state.show_details = not st.session_state.show_details
-
-    # Mostrar probabilidades si el usuario lo solicita
-    if st.session_state.show_details:
-        st.subheader("Distribución de probabilidad por clase:")
-        for i, prob in enumerate(st.session_state.probabilities):
-            st.write(f"Clase {i}: {prob:.2f}%")
