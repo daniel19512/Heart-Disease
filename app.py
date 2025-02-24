@@ -8,18 +8,45 @@ from sklearn.preprocessing import StandardScaler
 # Cargar el modelo de TensorFlow
 model = tf.keras.models.load_model("my_model.keras", compile=False)
 
+# Configuración de la página
+st.set_page_config(page_title="Predicción de Enfermedad Cardíaca", page_icon="❤️", layout="centered")
 
-# Intentar cargar el scaler preentrenado
+# Estilos personalizados
+st.markdown(
+    """
+    <style>
+        .stButton>button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .result-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            font-size: 18px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Título y descripción
+st.title("❤️ Predicción de Enfermedad Cardíaca")
+st.markdown("Ingrese los datos del paciente para obtener un diagnóstico.")
+
+# Cargar el scaler preentrenado
 try:
     scaler = joblib.load("scaler.pkl")  
 except FileNotFoundError:
     st.warning("No se encontró 'scaler.pkl'. Se usará un nuevo StandardScaler (puede afectar las predicciones).")
-    scaler = StandardScaler()  
+    scaler = StandardScaler()
 
-# Título de la aplicación
-st.title("Predicción de Enfermedades Cardíacas 🫀")
-
-# Formulario para ingresar datos
+# Sidebar para ingreso de datos
 st.sidebar.header("Ingrese los datos del paciente")
 age = st.sidebar.number_input("Edad", min_value=0, max_value=100, value=50)
 sex = st.sidebar.selectbox("Sexo", ["Masculino", "Femenino"])
@@ -52,7 +79,7 @@ input_data = pd.DataFrame({
     "thal": [thal],
 })
 
-# Mapear las variables categóricas a valores numéricos
+# Mapear variables categóricas
 input_data["cp"] = input_data["cp"].map({
     "Angina Típica": 1,
     "Angina Atípica": 2,
@@ -66,6 +93,23 @@ input_data["restecg"] = input_data["restecg"].map({
 })
 input_data["slope"] = input_data["slope"].map({"Down": 1, "Flat": 2, "Up": 3})
 input_data["thal"] = input_data["thal"].map({"Normal": 1, "Defecto Fijo": 2, "Defecto Reversible": 3})
+
+# Función para mostrar los resultados
+def show_results(predicted_class, probabilities_percentage):
+    st.subheader("Resultados de la Predicción")
+    
+    st.markdown(
+        f"""
+        <div class='result-card'>
+            <b>Predicción Final:</b> Clase {predicted_class}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    st.subheader("Distribución de probabilidad por clase:")
+    for i, prob in enumerate(probabilities_percentage):
+        st.write(f"Clase {i}: {prob:.2f}%")
 
 # Botón para predecir
 if st.sidebar.button("Predecir"):
@@ -83,14 +127,8 @@ if st.sidebar.button("Predecir"):
         # Determinar la clase con mayor probabilidad
         predicted_class = int(np.argmax(probabilities)) 
     
-        # Mostrar distribución de probabilidades
-        st.subheader("Distribución de probabilidad por clase:")
-        for i, prob in enumerate(probabilities_percentage):
-            st.write(f"Clase {i}: {prob:.4}%")
-
-        # Mostrar predicción final
-        st.subheader("Predicción final:")
-        st.write(f"La clase predicha es: {predicted_class}")
+        # Mostrar los resultados con tarjetas
+        show_results(predicted_class, probabilities_percentage)
     
     except Exception as e:
         st.error(f"Error al hacer la predicción: {e}")
