@@ -120,6 +120,7 @@ if st.sidebar.button("Predecir"):
         else:
             color_class = "red"
             message = "Alta probabilidad de enfermedad cardíaca. Consulta con un especialista."
+            st.image("warning.png", caption="Advertencia", use_container_width=True)
         
         # Mostrar predicción final en cuadro de color
         st.markdown(f'<div class="result-box {color_class}">{message}</div>', unsafe_allow_html=True)
