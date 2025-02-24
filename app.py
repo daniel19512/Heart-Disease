@@ -15,38 +15,33 @@ st.set_page_config(page_title="Predicción de Enfermedad Cardíaca", page_icon="
 st.markdown(
     """
     <style>
-        .stButton>button {
-            background-color: #4CAF50;
-            color: white;
-            font-size: 16px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .result-card {
-            background-color: #f8f9fa;
+        .result-box {
             padding: 15px;
             border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
             text-align: center;
-            font-size: 18px;
+            font-size: 20px;
+            font-weight: bold;
         }
+        .green { background-color: #ccffcc; color: #006600; }
+        .yellow { background-color: #fff4c2; color: #996600; }
+        .red { background-color: #ffcccc; color: #990000; }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Título y descripción
-st.title("❤️ Predicción de Enfermedad Cardíaca")
-st.markdown("Ingrese los datos del paciente para obtener un diagnóstico.")
-
-# Cargar el scaler preentrenado
+# Intentar cargar el scaler preentrenado
 try:
     scaler = joblib.load("scaler.pkl")  
 except FileNotFoundError:
     st.warning("No se encontró 'scaler.pkl'. Se usará un nuevo StandardScaler (puede afectar las predicciones).")
-    scaler = StandardScaler()
+    scaler = StandardScaler()  
 
-# Sidebar para ingreso de datos
+# Título de la aplicación
+st.title("❤️ Predicción de Enfermedades Cardíacas")
+st.markdown("Ingrese los datos del paciente para obtener un diagnóstico.")
+
+# Formulario para ingresar datos
 st.sidebar.header("Ingrese los datos del paciente")
 age = st.sidebar.number_input("Edad", min_value=0, max_value=100, value=50)
 sex = st.sidebar.selectbox("Sexo", ["Masculino", "Femenino"])
@@ -79,7 +74,7 @@ input_data = pd.DataFrame({
     "thal": [thal],
 })
 
-# Mapear variables categóricas
+# Mapear las variables categóricas a valores numéricos
 input_data["cp"] = input_data["cp"].map({
     "Angina Típica": 1,
     "Angina Atípica": 2,
@@ -93,23 +88,6 @@ input_data["restecg"] = input_data["restecg"].map({
 })
 input_data["slope"] = input_data["slope"].map({"Down": 1, "Flat": 2, "Up": 3})
 input_data["thal"] = input_data["thal"].map({"Normal": 1, "Defecto Fijo": 2, "Defecto Reversible": 3})
-
-# Función para mostrar los resultados
-def show_results(predicted_class, probabilities_percentage):
-    st.subheader("Resultados de la Predicción")
-    
-    st.markdown(
-        f"""
-        <div class='result-card'>
-            <b>Predicción Final:</b> Clase {predicted_class}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    
-    st.subheader("Distribución de probabilidad por clase:")
-    for i, prob in enumerate(probabilities_percentage):
-        st.write(f"Clase {i}: {prob:.2f}%")
 
 # Botón para predecir
 if st.sidebar.button("Predecir"):
@@ -127,8 +105,24 @@ if st.sidebar.button("Predecir"):
         # Determinar la clase con mayor probabilidad
         predicted_class = int(np.argmax(probabilities)) 
     
-        # Mostrar los resultados con tarjetas
-        show_results(predicted_class, probabilities_percentage)
+        # Mostrar distribución de probabilidades
+        st.subheader("Distribución de probabilidad por clase:")
+        for i, prob in enumerate(probabilities_percentage):
+            st.write(f"Clase {i}: {prob:.2f}%")
+
+        # Determinar color del cuadro según la clase predicha
+        if predicted_class == 0:
+            color_class = "green"
+            message = "Baja probabilidad de enfermedad cardíaca."
+        elif predicted_class in [1, 2]:
+            color_class = "yellow"
+            message = "Riesgo moderado de enfermedad cardíaca."
+        else:
+            color_class = "red"
+            message = "Alta probabilidad de enfermedad cardíaca. Consulta con un especialista."
+        
+        # Mostrar predicción final en cuadro de color
+        st.markdown(f'<div class="result-box {color_class}">{message}</div>', unsafe_allow_html=True)
     
     except Exception as e:
         st.error(f"Error al hacer la predicción: {e}")
