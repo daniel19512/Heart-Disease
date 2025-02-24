@@ -66,7 +66,7 @@ input_data["thal"] = input_data["thal"].map({"Normal": 1, "Defecto Fijo": 2, "De
 
 # Botón para predecir
 if st.sidebar.button("Predecir"):
-    input_array = np.array(input_data, dtype=np.float32).reshape(1, -1)
+    input_array = scaler.transform(np.array(input_data, dtype=np.float32).reshape(1, -1))
     
     # Estandarización
     input_array = scaler.transform(input_array)  # Normalizamos los datos
