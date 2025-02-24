@@ -2,9 +2,16 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+from sklearn.preprocessing import StandardScaler
 
 # Cargar el modelo
 model = tf.keras.models.load_model("my_model.keras")
+
+# Cargar scaler preentrenado si se usó en el entrenamiento
+try:
+    scaler = joblib.load("scaler.pkl")  # Asegúrate de guardar y cargar el scaler adecuado
+except:
+    scaler = StandardScaler()
 
 # Título de la aplicación
 st.title("Predicción de Enfermedades Cardíacas 🫀")
@@ -43,47 +50,41 @@ input_data = pd.DataFrame({
 })
 
 # Mapear las variables categóricas a valores numéricos
-input_data["sex"] = input_data["sex"].map({"Male": 1, "Female": 0})
 input_data["cp"] = input_data["cp"].map({
-    "typical angina": 1,
-    "atypical angina": 2,
-    "non-anginal": 3,
-    "asymptomatic": 4
+    "Angina Típica": 1,
+    "Angina Atípica": 2,
+    "No Anginoso": 3,
+    "Asintomático": 4
 })
 input_data["restecg"] = input_data["restecg"].map({
-    "normal": 0,
-    "st-t abnormality": 1,
-    "lv hypertrophy": 2
+    "Normal": 0,
+    "Anormalidad ST-T": 1,
+    "Hipertrofia Ventricular Izquierda": 2
 })
-input_data["fbs"] = input_data["fbs"].map({1: 1, 0: 0})
-input_data["exang"] = input_data["exang"].map({1: 1, 0: 0})
-input_data["slope"] = input_data["slope"].map({"downsloping": 1, "flat": 2, "upsloping": 3})
-input_data["thal"] = input_data["thal"].map({"normal": 1, "fixed defect": 2, "reversable defect": 3})
+input_data["slope"] = input_data["slope"].map({"Down": 1, "Flat": 2, "Up": 3})
+input_data["thal"] = input_data["thal"].map({"Normal": 1, "Defecto Fijo": 2, "Defecto Reversible": 3})
 
 # Botón para predecir
 if st.sidebar.button("Predecir"):
     input_array = np.array(input_data, dtype=np.float32).reshape(1, -1)
     
-    # Depuración: Verificar dimensiones antes de predecir
-    print("🔍 Forma esperada por el modelo:", model.input_shape)  # (None, num_features)
-    print("🔍 Forma de input_array:", input_array.shape)
-    print("🔍 Verificando modelo...")
-    print(model.summary())  # Esto mostrará la estructura del modelo
-
-    prediction = model.predict(input_data)  # Obtiene las probabilidades de cada clase
+    # Estandarización
+    input_array = scaler.transform(input_array)  # Normalizamos los datos
+    
+    prediction = model.predict(input_array)  # Obtiene las probabilidades de cada clase
     probabilities = prediction[0]  # Se asume que model.predict devuelve un array (1, 5)
-
+    
     # Normalizar a porcentajes
     probabilities_percentage = (probabilities * 100).round(2)
-
+    
     # Determinar la clase con mayor probabilidad
     predicted_class = int(np.argmax(probabilities))
-
+    
     # Mostrar distribución de probabilidades
     st.subheader("Distribución de probabilidad por clase:")
     for i, prob in enumerate(probabilities_percentage):
         st.write(f"Clase {i}: {prob}%")
-
+    
     # Mostrar predicción final
     st.subheader("Predicción final:")
     st.write(f"Clase {predicted_class}")
