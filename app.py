@@ -151,7 +151,8 @@ if st.session_state.prediction is not None:
 
     # Mostrar imagen de advertencia si aplica
     if warning_image:
-        st.image(warning_image, caption="Advertencia: Alto Riesgo", use_column_width=True)
+        st.image(warning_image, caption="Advertencia: Alto Riesgo", use_container_width=True)
+
 
     # Botón para ver detalles de la predicción
     if st.button("Ver detalles de la predicción"):
