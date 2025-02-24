@@ -6,7 +6,8 @@ import joblib
 from sklearn.preprocessing import StandardScaler
 
 # Cargar el modelo de TensorFlow
-model = tf.keras.models.load_model("my_model.keras")
+model = tf.keras.models.load_model("my_model.keras", compile=False)
+
 
 # Intentar cargar el scaler preentrenado
 try:
