@@ -15,20 +15,35 @@ st.set_page_config(page_title="Predicción de Enfermedad Cardíaca", page_icon="
 st.markdown(
     """
     <style>
-        .result-box {
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
+        .stSuccess {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
         }
-        .green { background-color: #ccffcc; color: #006600; }
-        .yellow { background-color: #fff4c2; color: #996600; }
-        .red { background-color: #ffcccc; color: #990000; }
+        .stWarning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .stError {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
     </style>
     """,
     unsafe_allow_html=True
 )
+
+# Título y descripción
+st.title("❤️ Predicción de Enfermedad Cardíaca")
+st.markdown("Ingrese los datos del paciente para obtener un diagnóstico.")
 
 # Intentar cargar el scaler preentrenado
 try:
@@ -37,11 +52,7 @@ except FileNotFoundError:
     st.warning("No se encontró 'scaler.pkl'. Se usará un nuevo StandardScaler (puede afectar las predicciones).")
     scaler = StandardScaler()  
 
-# Título de la aplicación
-st.title("❤️ Predicción de Enfermedades Cardíacas")
-st.markdown("Ingrese los datos del paciente para obtener un diagnóstico.")
-
-# Formulario para ingresar datos
+# Formulario de entrada
 st.sidebar.header("Ingrese los datos del paciente")
 age = st.sidebar.number_input("Edad", min_value=0, max_value=100, value=50)
 sex = st.sidebar.selectbox("Sexo", ["Masculino", "Femenino"])
@@ -74,7 +85,7 @@ input_data = pd.DataFrame({
     "thal": [thal],
 })
 
-# Mapear las variables categóricas a valores numéricos
+# Mapear variables categóricas a valores numéricos
 input_data["cp"] = input_data["cp"].map({
     "Angina Típica": 1,
     "Angina Atípica": 2,
@@ -92,37 +103,38 @@ input_data["thal"] = input_data["thal"].map({"Normal": 1, "Defecto Fijo": 2, "De
 # Botón para predecir
 if st.sidebar.button("Predecir"):
     try:
-        # Normalizar los datos con el scaler cargado
+        # Normalizar los datos
         input_array = scaler.transform(input_data.values).reshape(1, -1)
         
         # Obtener predicción
         prediction = model.predict(input_array)
-        probabilities = prediction[0]  # Se asume que model.predict devuelve un array (1, n_clases)
+        probabilities = prediction[0]  
 
         # Normalizar a porcentajes
         probabilities_percentage = (probabilities * 100).round(2)
 
         # Determinar la clase con mayor probabilidad
         predicted_class = int(np.argmax(probabilities)) 
-    
-        # Mostrar distribución de probabilidades
-        st.subheader("Distribución de probabilidad por clase:")
-        for i, prob in enumerate(probabilities_percentage):
-            st.write(f"Clase {i}: {prob:.2f}%")
 
-        # Determinar color del cuadro según la clase predicha
+        # Asignar color según la predicción
         if predicted_class == 0:
-            color_class = "green"
-            message = "Baja probabilidad de enfermedad cardíaca."
+            color_class = "stSuccess"
+            message = "No se detecta enfermedad cardíaca."
         elif predicted_class in [1, 2]:
-            color_class = "yellow"
+            color_class = "stWarning"
             message = "Riesgo moderado de enfermedad cardíaca."
         else:
-            color_class = "red"
-            message = "Alta probabilidad de enfermedad cardíaca. Consulta con un especialista."
-        
-        # Mostrar predicción final en cuadro de color
-        st.markdown(f'<div class="result-box {color_class}">{message}</div>', unsafe_allow_html=True)
+            color_class = "stError"
+            message = "Alto riesgo de enfermedad cardíaca."
+
+        # Mostrar resultado con color correspondiente
+        st.markdown(f'<div class="{color_class}">{message}</div>', unsafe_allow_html=True)
+
+        # Botón para ver detalles
+        if st.button("Ver detalles de la predicción"):
+            st.subheader("Distribución de probabilidad por clase:")
+            for i, prob in enumerate(probabilities_percentage):
+                st.write(f"Clase {i}: {prob:.2f}%")
     
     except Exception as e:
         st.error(f"Error al hacer la predicción: {e}")
